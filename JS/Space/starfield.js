@@ -31,7 +31,7 @@ class Star {
     this.counter = getRandomInt(1, canvasWidth);
 
     this.radiusMax = getRandomInt(0.1, 2);
-    this.speed = getRandomInt(1, 50);
+    this.speed = getRandomInt(1, 5);
     // this.radius = getRandomInt(0.1, 1);
     this.context = mainContext;
   }
@@ -45,8 +45,8 @@ class Star {
       this.x = getRandomInt(-centerX, centerX);
       this.x = getRandomInt(-centerY, centerY);
 
-      this.radiusMax = getRandomInt(0.1, 10);
-      this.speed = getRandomInt(1, 50);
+      this.radiusMax = getRandomInt(0.1, 7);
+      this.speed = getRandomInt(1, 10);
     }
 
     let xRatio = this.x / this.counter;
@@ -56,6 +56,7 @@ class Star {
     let starY = remap(yRatio, 0, 1, 0, canvasHeight);
 
     this.radius = remap(this.counter, 0, canvasWidth, this.radiusMax, 0);
+    
 
     mainContext.beginPath();
 
@@ -93,7 +94,7 @@ function draw() {
   /*
 TODO 
 
-    *ADD Delta Tima for fixing the frame rate
+    *ADD Delta Time for fixing the frame rate
 */
 }
 draw();

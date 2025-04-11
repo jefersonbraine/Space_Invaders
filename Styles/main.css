@@ -1,28 +1,82 @@
+/* @import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap"); */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 * {
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    image-rendering: pixelated;
+  padding: 0;
+  margin: 0;
+  /* font-family: Arial, Helvetica, sans-serif; */
+
+  image-rendering: pixelated;
 }
 
-/* body {
-    background-image: url("../images/Background.jpg");
-    background-size: 1920;
-} */
-
 #canvas-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  align-items: center;
+}
+
+/* * TITLE SCREEN */
+#ui {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: auto;
+
+  /* *PNG TITULO */
+  && #title {
+    margin-top: 100px;
+  }
+
+  && #intro {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    align-items: center;
+    margin-top: 150px;
+
+  }
 }
 
-/* canvas {
-    width: 1100px;
-    height: 600px;
-    margin-top: 100px;
-   
-    
-    background-color: rgba(0, 0, 0, 0.712);
-} */
+/* * START BUTTON */
+#start-game {
+  font-size: 20px;
+  padding: 10px;
+  border: 1px solid rgb(0, 255, 0);
+  background: none;
+  color: rgb(0, 255, 0);
+  transition: 0.3s;
+  font-family: "Press Start 2p";
+  font-weight: 200;
+
+  
+}
+
+#start-game:hover {
+  cursor: pointer;
+  color: white;
+  background-color: rgb(8, 90, 8);
+  transform: scale(1.1);
+  border-radius: 10px;
+  font-family: "Press Start 2p";
+  font-weight: 700;
+
+}
+
+canvas {
+
+
+  height: 100%;
+  margin: auto;
+  /* background-color: white; */
+}
+
+#credits {
+  margin-top: 10px;
+  text-align: center;
+  font-family: "Press Start 2p";
+  color: white;
+  
+}
