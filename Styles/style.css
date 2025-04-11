@@ -1,0 +1,27 @@
+* {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+
+body {
+    background-image: url("../images/Background.jpg");
+    background-size: contain;
+}
+
+/* #canvas-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
+}
+
+canvas {
+    width: 256;
+    height: 224;
+    margin-top: 50px;
+    width: 80%;
+    background-color: black;
+} */
