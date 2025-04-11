@@ -5,10 +5,10 @@
     image-rendering: pixelated;
 }
 
-body {
+/* body {
     background-image: url("../images/Background.jpg");
-    background-size: 1170px;
-}
+    background-size: 1920;
+} */
 
 #canvas-container {
     display: flex;
@@ -18,11 +18,11 @@ body {
     align-items: center;
 }
 
-canvas {
+/* canvas {
     width: 1100px;
     height: 600px;
     margin-top: 100px;
-    /* width: 50%; */
+   
     
     background-color: rgba(0, 0, 0, 0.712);
-}
+} */
