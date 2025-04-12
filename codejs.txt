@@ -1,0 +1,410 @@
+const images = {};
+
+const imagesToLoad = {
+  player: "../images/player.png",
+  enemyA1: "../images/enemyA1.png",
+  enemyA0: "../images/enemyA0.png",
+  enemyB0: "../images/enemyB0.png",
+  enemyB1: "../images/enemyB1.png",
+  enemyC0: "../images/enemyC0.png",
+  enemyC1: "../images/enemyC1.png",
+};
+
+(function loadImages() {
+  let loadedCount = 0;
+  const totalImages = Object.keys(imagesToLoad).length;
+
+  Object.keys(imagesToLoad).forEach((key) => {
+    const img = new Image();
+    img.src = imagesToLoad[key];
+    images[key] = {
+      image: img,
+      isLoaded: false,
+    };
+
+    img.onload = () => {
+      images[key].isLoaded = true;
+      loadedCount++;
+      console.log(`Imagem carregada: ${key}`);
+      if (loadedCount === totalImages) {
+        console.log("Todas as imagens foram carregadas.");
+        startGame();
+      }
+    };
+
+    img.onerror = () => {
+      console.error(`Erro ao carregar a imagem: ${key} - ${imagesToLoad[key]}`);
+    };
+  });
+})();
+
+let canvas;
+let ctx;
+const width = 400;
+const height = 600;
+const rightArrow = 39;
+const leftArrow = 37;
+const spaceBar = 32;
+let player;
+let invaders;
+let score = 0;
+let lives = 3;
+
+class Alien {
+  constructor(x, y, imageKey) {
+    this.x = x;
+    this.y = y;
+    this.imageKey = imageKey;
+  }
+  draw() {
+    const img = images[this.imageKey].image;
+    if (img && images[this.imageKey].isLoaded) {
+      ctx.drawImage(img, this.x, this.y, img.width / 30, img.height / 30);
+    }
+  }
+}
+
+class Invaders {
+  constructor(rowsCount) {
+    this.rowsCount = rowsCount;
+    this.direction = 0;
+    this.y = 40;
+    this.speed = 0.2;
+    this.timeSinceLastBullet = 0;
+    this.bulletInterval = 40;
+    this.alienImageKeys = ["enemyA0", "enemyB0", "enemyC0"]; // Inicialize aqui, ANTES de chamar initialiseAliens
+    this.aliens = this.initialiseAliens();
+    this.bullets = [];
+  }
+
+  update() {
+    for (let alien of this.aliens) {
+      if (this.direction == 0) {
+        alien.x += this.speed;
+      } else if (this.direction == 1) {
+        alien.x -= this.speed;
+      }
+    }
+
+    if (this.hasChangedDirection()) {
+      this.moveAlienDown();
+    }
+
+    if (this.aliens.length == 0) {
+      this.nextLevel();
+    }
+
+    if (this.timeSinceLastBullet >= this.bulletInterval) {
+      let bottomAliens = this.getBottomAliens();
+      if (bottomAliens.length) {
+        this.makeABottomAlienShoot(bottomAliens);
+      }
+      this.timeSinceLastBullet = 0;
+    }
+    this.timeSinceLastBullet++;
+
+    this.updateBullets();
+  }
+
+  hasChangedDirection() {
+    for (let alien of this.aliens) {
+      const img = images[alien.imageKey].image;
+      const alienWidth = img ? img.width / 30 : 20; // Estimativa de largura
+      if (alien.x >= width - 40 - alienWidth) {
+        this.direction = 1;
+        return true;
+      } else if (alien.x <= 20) {
+        this.direction = 0;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  moveAlienDown() {
+    for (let alien of this.aliens) {
+      alien.y += 10;
+    }
+  }
+
+  getBottomAliens() {
+    let allXPositions = this.getAllXPositions();
+    let aliensAtTheBottom = [];
+    for (let alienAtX of allXPositions) {
+      let bestYPosition = 0;
+      let lowestAlien;
+      for (let alien of this.aliens) {
+        if (alien.x == alienAtX) {
+          if (alien.y > bestYPosition) {
+            bestYPosition = alien.y;
+            lowestAlien = alien;
+          }
+        }
+      }
+      if (lowestAlien) {
+        aliensAtTheBottom.push(lowestAlien);
+      }
+    }
+    return aliensAtTheBottom;
+  }
+
+  nextLevel() {
+    this.speed += 0.1;
+    this.alienImageKeys = ["enemyA1", "enemyB1", "enemyC1"]; // Próximo nível de imagens
+    this.aliens = this.initialiseAliens();
+    this.bulletInterval = Math.max(10, this.bulletInterval - 5); // Aumenta a frequência de tiros
+  }
+
+  getAllXPositions() {
+    let allXPositions = new Set();
+    for (let alien of this.aliens) {
+      allXPositions.add(alien.x);
+    }
+    return Array.from(allXPositions);
+  }
+
+  initialiseAliens() {
+    let aliens = [];
+    let y = 40;
+    for (let i = 0; i < this.rowsCount; i++) {
+      for (let x = 40; x < width - 40; x += 30) {
+        const imageKey = this.alienImageKeys[i % this.alienImageKeys.length];
+        aliens.push(new Alien(x, y, imageKey));
+      }
+      y += 40;
+    }
+    return aliens;
+  }
+
+  draw() {
+    for (let bullet of this.bullets) {
+      bullet.draw();
+    }
+    for (let alien of this.aliens) {
+      alien.draw();
+    }
+  }
+
+  checkCollision(x, y) {
+    for (let i = this.aliens.length - 1; i >= 0; i--) {
+      let currentAlien = this.aliens[i];
+      const img = images[currentAlien.imageKey].image;
+      const alienWidthHalf = (img ? img.width / 30 : 20) / 2;
+      const alienHeightHalf = (img ? img.height / 30 : 20) / 2;
+
+      if (
+        x > currentAlien.x &&
+        x < currentAlien.x + alienWidthHalf * 2 &&
+        y > currentAlien.y &&
+        y < currentAlien.y + alienHeightHalf * 2
+      ) {
+        this.aliens.splice(i, 1);
+        score += 10;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  makeABottomAlienShoot(bottomAliens) {
+    let shootingAlien =
+      bottomAliens[Math.floor(Math.random() * bottomAliens.length)];
+    if (shootingAlien) {
+      let bullet = new AlienBullet(
+        shootingAlien.x + images[shootingAlien.imageKey].image.width / 60,
+        shootingAlien.y + images[shootingAlien.imageKey].image.height / 60
+      );
+      this.bullets.push(bullet);
+    }
+  }
+
+  updateBullets() {
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      this.bullets[i].update();
+      if (this.bullets[i].y > height) {
+        this.bullets.splice(i, 1);
+      }
+    }
+  }
+}
+
+class Bullet {
+  constructor(x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+  }
+  draw() {
+    ctx.fillStyle = "white";
+    ctx.fillRect(this.x - 1.5, this.y - 5, 3, 10);
+  }
+  update() {
+    this.y += this.speed;
+  }
+}
+
+class AlienBullet extends Bullet {
+  constructor(x, y) {
+    super(x, y, 2);
+  }
+}
+
+class Player {
+  constructor(imageKey) {
+    this.imageKey = imageKey;
+    this.x = width / 2 - 11.5;
+    this.y = height - 30;
+    this.isMovingLeft = false;
+    this.isMovingRight = false;
+    this.bullets = [];
+    this.speed = 2;
+  }
+  update() {
+    if (this.isMovingRight) {
+      this.x += this.speed;
+    } else if (this.isMovingLeft) {
+      this.x -= this.speed;
+    }
+    this.constrain();
+    this.updateBullets();
+  }
+  updateBullets() {
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      this.bullets[i].update();
+      if (invaders.checkCollision(this.bullets[i].x, this.bullets[i].y)) {
+        this.bullets.splice(i, 1);
+      } else if (this.bullets[i].y < 0) {
+        this.bullets.splice(i, 1);
+      }
+    }
+  }
+  constrain() {
+    const img = images[this.imageKey].image;
+    const playerWidth = img ? img.width / 20 : 23;
+    if (this.x <= 0) {
+      this.x = 0;
+    } else if (this.x > width - playerWidth) {
+      this.x = width - playerWidth;
+    }
+  }
+  draw() {
+    const img = images[this.imageKey].image;
+    if (img && images[this.imageKey].isLoaded) {
+      ctx.drawImage(img, this.x, this.y, img.width / 20, img.height / 20);
+    }
+    this.drawBullets();
+  }
+  drawBullets() {
+    for (let bullet of this.bullets) {
+      bullet.draw();
+    }
+  }
+  drawLives() {
+    ctx.fillStyle = "white";
+    ctx.font = "15px Arial";
+    ctx.fillText(`LIVES: ${lives}`, 250, 25);
+    const img = images[this.imageKey].image;
+    if (img && images[this.imageKey].isLoaded) {
+      for (let i = 0; i < lives; i++) {
+        ctx.drawImage(img, 320 + i * 20, 10, img.width / 25, img.height / 25);
+      }
+    }
+  }
+  drawScore() {
+    ctx.fillStyle = "lightgreen";
+    ctx.font = "15px Arial";
+    ctx.fillText(`SCORE: ${score}`, 50, 25);
+  }
+  moveLeft() {
+    this.isMovingRight = false;
+    this.isMovingLeft = true;
+  }
+  moveRight() {
+    this.isMovingLeft = false;
+    this.isMovingRight = true;
+  }
+  shoot() {
+    this.bullets.push(
+      new Bullet(this.x + images[this.imageKey].image.width / 40, this.y, -6)
+    );
+  }
+}
+
+function handleKeyDown(event) {
+  if (event.keyCode === rightArrow || event.keyCode === 88) {
+    player.moveRight();
+  } else if (event.keyCode === leftArrow || event.keyCode === 90) {
+    player.moveLeft();
+  } else if (event.keyCode === spaceBar) {
+    player.shoot();
+  }
+}
+
+function handleKeyUp(event) {
+  if (event.keyCode === rightArrow || event.keyCode === 88) {
+    player.isMovingRight = false;
+  } else if (event.keyCode === leftArrow || event.keyCode === 90) {
+    player.isMovingLeft = false;
+  }
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, width, height);
+  if (player && invaders) {
+    invaders.update();
+    invaders.draw();
+    player.update();
+    player.draw();
+    player.drawLives();
+    player.drawScore();
+
+    // Checar colisão entre balas dos alienígenas e o jogador (exemplo básico)
+    for (let i = invaders.bullets.length - 1; i >= 0; i--) {
+      const bullet = invaders.bullets[i];
+      const playerImg = images[player.imageKey].image;
+      const playerWidth = playerImg ? playerImg.width / 20 : 23;
+      const playerHeight = playerImg ? playerImg.height / 20 : 30;
+
+      if (
+        bullet.x > player.x &&
+        bullet.x < player.x + playerWidth &&
+        bullet.y > player.y &&
+        bullet.y < player.y + playerHeight
+      ) {
+        invaders.bullets.splice(i, 1);
+        lives--;
+        if (lives <= 0) {
+          console.log("Game Over!");
+          player = null;
+          invaders = null;
+          // Aqui você implementaria a lógica de fim de jogo
+        }
+      }
+    }
+
+    if (player && invaders.aliens.length === 0) {
+      console.log("Você venceu! Próximo nível.");
+      invaders.nextLevel();
+    }
+  } else {
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over", width / 2, height / 2);
+    ctx.textAlign = "start"; // Reset text alignment
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  console.log("Iniciando o jogo...");
+  canvas = document.getElementById("gameCanvas");
+  ctx = canvas.getContext("2d");
+  player = new Player("player");
+  invaders = new Invaders(3);
+  score = 0;
+  lives = 3;
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("keyup", handleKeyUp);
+  gameLoop();
+}
